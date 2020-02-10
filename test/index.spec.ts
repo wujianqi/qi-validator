@@ -3,6 +3,7 @@ import assert from 'assert';
 import v, { ResultObject } from '../src/validator';
 
 describe('验证链 validator test', function () {
+  v.printout = true;
   let data = {
     "name": "张三",
     "age":30,

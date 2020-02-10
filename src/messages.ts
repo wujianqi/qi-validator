@@ -1,4 +1,4 @@
-export const targetDefault: string[] = ['范围值'];
+export const targetDefault: string[] = ['后者'];
 export default {
   default: '%a未通过验证！',
   required: '%a不能为空！',
@@ -93,17 +93,17 @@ export default {
   lt: '%a要小于%1！',
   lte: '%a要小于等于%1！',
   between: '%a要大于%1，小于%2！',
-  minof: '%a必须是在%t内最小的值！',
-  maxof: '%a必须是在%t内最大的值！',
+  minof: '%a必须是在%t最小的值！',
+  maxof: '%a必须是在%t最大的值！',
   len: '%a长度要等于%1！',
   min: '%a最小长度应为%1！',
   max: '%a最大长度应为%1！',
   charlen: '%a最大字节长度应为%1！',
-  in: '%a不在%t之内！',
-  has: '%a不在%t包含范围！',
+  in: '%a不在%t范围之内！',
+  has: '%a不存在%t！',
   empty: '%a必须是空的值！',
   regexp: '%a没有匹配正确！',
-  and: '%a和其它%t都不能为空！',
-  an: '%a和其它%t只能有一项不为空！',
-  or: '%a和其它%t至少一项或以上不能为空！'  
+  and: '%a和%t都不能为空！',
+  an: '%a和%t只能有一项不为空！',
+  or: '%a和%t至少一项或以上不能为空！'  
 };

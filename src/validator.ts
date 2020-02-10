@@ -33,7 +33,7 @@ const validator = {
   get any() {
     return chain();
   },
-  printout: true
+  printout: false
 };
 
 /**
@@ -94,18 +94,13 @@ function findValue(obj: TypeValue, path: (string | number)[]): any {
  * @param n2
  * @param n3
  */
-function format(info: string, n1?: string, n2?: string[], n3?: (string|number)[]): string {
+function format(info: string, n1?: string, n2?: string[], n3?: string[]): string {
   n1 = n1 || '';
   n2 = n2 || targetDefault;
-  info = info.replace(/%a/g, n1).replace(/%t/g, () => (n2.length > 0 ? n2.shift() : ''));
-
-  if (n3 && n3.length > 0) {
-    n3.forEach((n: string|number, i) => {
-      const reg = new RegExp(`%${i}` , 'gm');
-
-      info = info.replace(reg, methods.number(n) ? String(n): n);
-    })
-  }
+  info = info.replace(/%a/g, n1);
+  if (/\%t/.test(info)) info = info.replace(/%t/g, () => (n2.length > 0 ? n2.shift() : ''));
+  if (n3 && n3.length > 0 && /\%\d+/.test(info)) 
+    n3.forEach((n: string, i) => info = info.replace(new RegExp(`%${i}` , 'g'), n));
   return info;
 }
 
@@ -133,6 +128,7 @@ type ResultArray = [
  */
 function chkchain(value: any, chain: TypeChain, path?: (string | number)[]): 
   ResultArray | Promise<ResultArray> {
+  if (typeof value === 'string') value = value.trim();
   if (!value && chain.$types.indexOf('required') === -1) return void 0; // 非必填项无值，视为通过
 
   const ms = methods as { [k: string]: Method },
@@ -145,15 +141,15 @@ function chkchain(value: any, chain: TypeChain, path?: (string | number)[]):
     result: ResultArray = [
       errkeys, okeys, errMsgs, path, chain.$handler
     ],
-    addm = (m: string, args?: (string|number)[]) => // 设错误消息
+    addm = (m: string, args?: string[]) => // 设错误消息
       errMsgs.push(format(getinfo(m, chain.$msgs), nms[0], nms[1], args)),
     getm = (args?: any[]) => // 取值格式化
-      [value].concat(args).map(n => methods.string(n) || methods.number(n) ? n: '');
+      [value].concat(args).map(n => methods.string(n) || methods.number(n) ? String(n): '');
   
   chain.$types.forEach( t=> {
     if (typeof t === 'string') { // 内置单参数方法验证失败
       if (ms[t](value) === false) {
-        errkeys.push(t);        
+        errkeys.push(t);
         addm(t, getm());
       } else okeys.push(t);
     }
@@ -198,6 +194,19 @@ function chkchain(value: any, chain: TypeChain, path?: (string | number)[]):
 }
 
 /**
+ * 将验证结果消息输出（调试）
+ * @param errs 
+ */
+function printout(errs: ResultObject) {
+  const m = errs,
+      p = m.path ? m.path.join('.') + ': \n': '',
+      nm = m.msgs.map((n, i) => m.keys[i] + ' \u2717 ' + n);
+
+    console.warn(`\x1B[31m${p}\x1B[36m${nm.join('\n')}`);
+}
+
+
+/**
  * 验证结果处理（生成对象，返回结果）
  * @param chain 
  * @param keys
@@ -222,11 +231,7 @@ function getResult(results: ResultArray): boolean {
     };
 
     if (handlers && handlers[0]) handlers[0](getErrs());
-    if (validator.printout) {
-      const m = getErrs();
-
-      console.warn(m.path ? m.path.join('.') + ': ': '', m.msgs.join('; '));
-    }
+    if (validator.printout) printout(getErrs());
     return false;
   } else {
     if (handlers && handlers[1]) { 
@@ -310,6 +315,5 @@ export default Object.assign(validator, {
   validate,
   get(obj: TypeValue, path: string | (string|number) []): any {
     return findValue(obj, methods.string(path) ? path.split('.'): path);
-  },
-  
+  }
 });
