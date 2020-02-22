@@ -1,12 +1,12 @@
 import methods from './methods';
 import messages, { targetDefault } from './messages';
-import chain, { 
-  StructObject, StructArray, ChainConstructor, Method, AsyncMethod,
-  ResultObject, Callback, TypeMessages, TypeChain
+import Chain, { 
+  StructObject, TypeStruct, Method, AsyncMethod,
+  ResultObject, Callback, TypeMessages
 } from './chain';
 export { 
-  StructObject, StructArray, Method,  AsyncMethod, ResultObject, 
-  Callback, TypeMessages, TypeChain
+  Method,  AsyncMethod, ResultObject, 
+  Callback, TypeMessages, Chain
 };
 
 interface TypeValue {
@@ -16,22 +16,22 @@ interface TypeValue {
 
 const validator = {  
   get string() {
-    return chain().string;
+    return new Chain().string;
   },
   get number() {
-    return chain().number;
+    return new Chain().number;
   },
   get object() {
-    return chain().object;
+    return new Chain().object;
   },
   get array() {
-    return chain().array;
+    return new Chain().array;
   },
   get boolean() {
-    return chain().boolean;
+    return new Chain().boolean;
   },
   get any() {
-    return chain();
+    return new Chain();
   },
   printout: false
 };
@@ -42,13 +42,13 @@ const validator = {
  * @param path
  * @param cb
  */
-function findChain(struct: StructObject|StructArray, path: (string | number)[], cb: Function): void {
+function findChain(struct: TypeStruct, path: (string | number)[], cb: Function): void {
   if (Array.isArray(struct) && struct.length > 0) {
-    struct.forEach((t, i) => {
+    struct.forEach((t:StructObject|Chain|undefined, i:number) => {
       const p = path.concat();
 
       p.push(i);
-      if (t instanceof ChainConstructor) { cb(p, t); }
+      if (t instanceof Chain) { cb(p, t); }
       else if (typeof t === 'object') { 
         findChain(t, p, cb); 
       }
@@ -59,9 +59,9 @@ function findChain(struct: StructObject|StructArray, path: (string | number)[], 
       const p = path.concat();
 
       p.push(key);
-      if (type instanceof ChainConstructor) { cb(p, type); }
+      if (type instanceof Chain) { cb(p, type); }
       else if (typeof type === 'object') { 
-        findChain(type as StructObject|StructArray, p, cb); 
+        findChain(type as StructObject, p, cb); 
       }
     })
   }
@@ -96,9 +96,13 @@ function findValue(obj: TypeValue, path: (string | number)[]): any {
  */
 function format(info: string, n1?: string, n2?: string[], n3?: string[]): string {
   n1 = n1 || '';
-  n2 = n2 || targetDefault;
+  let nv = n2 || targetDefault;
+
   info = info.replace(/%a/g, n1);
-  if (/\%t/.test(info)) info = info.replace(/%t/g, () => (n2.length > 0 ? n2.shift() : ''));
+  if (/\%t/.test(info)) info = info.replace(/%t/g, () => {
+    const ns = (nv.length > 0 ? nv.shift() : '')
+    return ns? ns : ''; 
+  });
   if (n3 && n3.length > 0 && /\%\d+/.test(info)) 
     n3.forEach((n: string, i) => info = info.replace(new RegExp(`%${i}` , 'g'), n));
   return info;
@@ -118,7 +122,7 @@ type ResultArray = [
   (string|number)[],
   string[],
   (string | number)[]?,
-  Callback[]?
+  [Callback?, Callback?]?
 ];
 
 /**
@@ -126,27 +130,27 @@ type ResultArray = [
  * @param data
  * @param chain
  */
-function chkchain(value: any, chain: TypeChain, path?: (string | number)[]): 
-  ResultArray | Promise<ResultArray> {
+function chkchain(value: any, chain: Chain, path?: (string | number)[]): 
+  ResultArray | Promise<ResultArray> | undefined{
   if (typeof value === 'string') value = value.trim();
-  if (!value && chain.$types.indexOf('required') === -1) return void 0; // 非必填项无值，视为通过
+  if (!value && chain.__types.indexOf('required') === -1) return void 0; // 非必填项无值，视为通过
 
   const ms = methods as { [k: string]: Method },
-    nms = chain.$names,
+    nms = chain.__names,
     afncs: Promise<boolean>[] = [],
     afArgs: [number, any[]][] = [],
     errkeys: (string|number)[] = [],
     okeys: (string|number)[] = [],
     errMsgs: string[] = [],
     result: ResultArray = [
-      errkeys, okeys, errMsgs, path, chain.$handler
+      errkeys, okeys, errMsgs, path, chain.__handler
     ],
     addm = (m: string, args?: string[]) => // 设错误消息
-      errMsgs.push(format(getinfo(m, chain.$msgs), nms[0], nms[1], args)),
+      errMsgs.push(format(getinfo(m, chain.__msgs), nms[0], nms[1], args)),
     getm = (args?: any[]) => // 取值格式化
       [value].concat(args).map(n => methods.string(n) || methods.number(n) ? String(n): '');
   
-  chain.$types.forEach( t=> {
+  chain.__types.forEach( t=> {
     if (typeof t === 'string') { // 内置单参数方法验证失败
       if (ms[t](value) === false) {
         errkeys.push(t);
@@ -161,15 +165,17 @@ function chkchain(value: any, chain: TypeChain, path?: (string | number)[]):
     }
   });
 
-  chain.$customs.forEach((n, i) => { // 自定义方法验证
+  chain.__customs.forEach((n, i) => { // 自定义方法验证
+    const ars = n[2] || [];
+  
     if (n[0] === 0 ) {
-      if (n[1](value, ...n[2]) === false) {
+      if (n[1](value, ...ars) === false) {
         errkeys.push(i);
-        addm(String(i), getm(n[2]));
+        addm(String(i), getm(ars));
       } else okeys.push(i);
     } else if (n[0] === 1 ) { // 链内异步合并
-      afncs.push(n[1](value, ...n[2]) as Promise<boolean>)
-      afArgs.push([i,n[2]]);
+      afncs.push(n[1](value, ...ars) as Promise<boolean>)
+      afArgs.push([i,ars]);
     }
   });
   
@@ -200,7 +206,7 @@ function chkchain(value: any, chain: TypeChain, path?: (string | number)[]):
 function printout(errs: ResultObject) {
   const m = errs,
       p = m.path ? m.path.join('.') + ': \n': '',
-      nm = m.msgs.map((n, i) => m.keys[i] + ' \u2717 ' + n);
+      nm = m.msgs ? m.msgs.map((n, i) => (m.keys? m.keys[i] :'') + ' \u2717 ' + n) : [];
 
     console.warn(`\x1B[31m${p}\x1B[36m${nm.join('\n')}`);
 }
@@ -222,9 +228,8 @@ function getResult(results: ResultArray): boolean {
 
   if (errkeys.length > 0 ) { 
     const getErrs = () => {
-      const errs: ResultObject = {};
+      const errs: ResultObject = {keys: errkeys};
 
-      if (errkeys.length > 0) errs.keys = errkeys;
       if (errMsgs.length > 0) errs.msgs = errMsgs;
       if (path && path.length > 0) errs.path = path;
       return errs;
@@ -235,8 +240,7 @@ function getResult(results: ResultArray): boolean {
     return false;
   } else {
     if (handlers && handlers[1]) { 
-      const oks: ResultObject = {};
-      if (okeys.length > 0) oks.keys = okeys;
+      const oks: ResultObject = {keys: okeys};
       if (path && path.length > 0) oks.path = path;
 
       handlers[1](oks);
@@ -251,14 +255,14 @@ function getResult(results: ResultArray): boolean {
  * @param struct
  * @param parentPath
  */
-function check(value: any, struct: StructObject|StructArray|TypeChain, parentPath?: (string | number)[]): 
+function check(value: any, struct: TypeStruct, parentPath?: (string | number)[]): 
   boolean | Promise<boolean> {
-  if(typeof value !== 'object' && !(struct instanceof ChainConstructor)) throw new Error('Invalid arguments');
+  if(typeof value !== 'object' && !(struct instanceof Chain)) throw new Error('Invalid arguments');
   const checkeds: boolean[] = [],
     asyncFuncs: (Promise<ResultArray>)[] = [],
     checked = () => checkeds.length > 0 ? checkeds.indexOf(false) === -1 : false;
  
-  if(struct instanceof ChainConstructor) { // 单链验证
+  if(struct instanceof Chain) { // 单链验证
     const result = chkchain(value, struct);
   
     if (struct.isAsync) {
@@ -268,9 +272,9 @@ function check(value: any, struct: StructObject|StructArray|TypeChain, parentPat
     }
 
   } else if(typeof value === 'object' && typeof struct === 'object') {
-    const chains: [TypeChain, (string | number)[]][] = [];
+    const chains: [Chain, (string | number)[]][] = [];
 
-    findChain(struct, [], (path: (string | number)[], chain: TypeChain) => { // 递归查找验证链
+    findChain(struct, [], (path: (string | number)[], chain: Chain) => { // 递归查找验证链
       chains.push([chain, path]);
     });
 
@@ -286,7 +290,7 @@ function check(value: any, struct: StructObject|StructArray|TypeChain, parentPat
       } else {
         checkeds.push(getResult(result as ResultArray ));
       }
-      if(c.$substruct) check(d, c.$substruct, np); // 验证子链
+      if(c.__substruct) check(d, c.__substruct, np); // 验证子链
 
     });
   } else throw new Error('Invalid arguments');
@@ -305,9 +309,9 @@ function check(value: any, struct: StructObject|StructArray|TypeChain, parentPat
   
   } else return checked();
 }
-function validate(data: string|number|boolean|null|undefined, struct: TypeChain): boolean | Promise<boolean>;
-function validate(data: object, struct: StructObject|StructArray|TypeChain): boolean | Promise<boolean>;
-function validate(data: any, struct: StructObject|StructArray|TypeChain): boolean | Promise<boolean> {
+function validate(data: string|number|boolean|null|undefined, struct: Chain): boolean | Promise<boolean>;
+function validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
+function validate(data: any, struct: TypeStruct): boolean | Promise<boolean> {
   return check(data, struct);
 }
 

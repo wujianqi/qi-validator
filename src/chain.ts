@@ -1,46 +1,12 @@
 import methods from './methods';
 
-type T1 = 'norepeats'|'ext';
-type T2 = 'min'|'max'|'charlen'|'len';
-type T3 = 'not'|'eq'|'has'|'in';
-type T4 = 'gt'|'gte'|'lt'|'lte';
-type T5 = 'minof'|'maxof';
-type T6 = 'enum'|'and'|'an'|'or';
-
-type Tp1 = {
-  [k in T1]?: (value: string) => TypeChain;
-};
-type Tp2 = {
-  [k in T2]?: (value: string|number) => TypeChain;
-};
-type Tp3 = {
-  [k in T3]?: (value: any) => TypeChain;
-};
-type Tp4 = {
-  [k in T4]?: (value: string | number | Date) => TypeChain;
-};
-type Tp5 = {
-  [k in T5]?: (val: string | number | Date, ...vals: (string | number | Date)[]) => TypeChain;
-};
-type Tp6 = {
-  [k in T6]?: (val: any, ...vals: any[]) => TypeChain;
-};
-type TypeProps = {
-  readonly [k in keyof (Omit<typeof methods, T1 | T2 | T3 | T4 | T5 | T6
-    | 'between'| 'norepeats'| 'regexp'>)]?: TypeChain;
-};
-export type TypeChain = ChainConstructor & TypeProps & Tp1 & Tp2 & Tp3 & Tp4 & Tp5 & Tp6 & {
-  'between'?: (val1: string | number | Date, val2: string | number | Date) => TypeChain;
-  'norepeats'?: (val1: string | number, val2: number) => TypeChain;
-  'regexp'?: (arg: RegExp) => TypeChain;
-};
-
 export interface StructObject {
-  [key: string]: StructArray | StructObject | TypeChain[] | TypeChain;
+  [key: string]: TypeStruct;
 }
-export interface StructArray extends Array<StructObject> {
-  [key: number]: StructObject ;
-}
+export type TypeStruct = StructObject | 
+  (StructObject|undefined)[] | ChainConstructor | 
+  (ChainConstructor|undefined)[] ;
+
 export interface Method {
   (...values: any[]): boolean;
 }
@@ -48,7 +14,7 @@ export interface AsyncMethod {
   (...values: any[]): Promise<boolean>;
 }
 export interface ResultObject {
-  keys?: (string|number)[];
+  keys: (string|number)[];
   msgs?: string[];
   path?: (string|number)[];
 }
@@ -57,67 +23,180 @@ export interface TypeMessages {
   [key: number]: string;
 }
 export interface Callback {
-  (result?: ResultObject): void;
+  (result: ResultObject): any;
 }
+
+interface ChainConstructor {
+  readonly required: this;
+  readonly english: this;
+  readonly alphanum: this;
+  readonly chinese: this;
+  readonly upper: this;
+  readonly lower: this;
+  readonly nospace: this;
+  readonly nodbc: this;
+  readonly norepeat: this;
+  readonly nospec: this;
+  readonly qq: this;
+  readonly age: this;
+  readonly zipcode: this;
+  readonly ip: this;
+  readonly ipv6: this;
+  readonly port: this;
+  readonly domain: this;
+  readonly bizcode: this;
+  readonly invoice: this;
+  readonly bankcard: this;
+  readonly pbcard: this;
+  readonly ticker: this;
+  readonly passport: this;
+  readonly score: this;
+  readonly currency: this;
+  readonly float: this;
+  readonly positivefloat: this;
+  readonly integer: this;
+  readonly positiveint: this;
+  readonly decimal: this;
+  readonly percent: this;
+  readonly even: this;
+  readonly odd: this;
+  readonly email: this;
+  readonly url: this;
+  readonly ftp: this;
+  readonly http: this;
+  readonly ws: this;
+  readonly account: this;
+  readonly password: this;
+  readonly hex: this;
+  readonly color: this;
+  readonly ascii: this;
+  readonly base64: this;
+  readonly md5: this;
+  readonly uuid: this;
+  readonly mobile: this;
+  readonly telphone: this;
+  readonly phone: this;
+  readonly year: this;
+  readonly month: this;
+  readonly day: this;
+  readonly hour: this;
+  readonly minute: this;
+  readonly hmt: this;
+  readonly time: this;
+  readonly date: this;
+  readonly datetime: this;
+  readonly idcard: this;
+  readonly autocard: this;
+  readonly longitude: this;
+  readonly latitude: this;
+  readonly londms: this;
+  readonly latdms: this;
+  readonly approval: this;
+  readonly citycode: this;
+  readonly address: this;
+  readonly isbn: this;
+  readonly tag: this;
+  readonly jwt: this;
+  readonly mac: this;
+  readonly thunder: this;
+  readonly mask: this;
+  readonly ed2k: this;
+  readonly magnet: this;
+  readonly path: this;
+  readonly file: this;
+  readonly linuxfile: this;
+  readonly imgurl: this;
+  readonly doc: this;
+  readonly object: this;
+  readonly boolean: this;
+  readonly string: this;
+  readonly number: this;
+  readonly array: this;
+  readonly func: this;
+  readonly datetype: this;
+  readonly empty: this;
+  readonly idcardvalid: this;
+  ext(value: string): this;
+  min(value: string | number): this;
+  max(value: string | number): this;
+  charlen(value: string | number): this;
+  len(value: string | number): this;
+  not(value: any): this;
+  eq(value: any): this;
+  has(value: any): this;
+  in(value: any): this;
+  gt(value: string | number | Date): this;
+  gte(value: string | number | Date): this;
+  lt(value: string | number | Date): this;
+  lte(value: string | number | Date): this;
+  minof(val: string | number | Date, ...vals: (string | number | Date)[]): this;
+  maxof(val: string | number | Date, ...vals: (string | number | Date)[]): this;
+  enum(val: any, ...vals: any[]): this;
+  and(val: any, ...vals: any[]): this;
+  an(val: any, ...vals: any[]): this;
+  or(val: any, ...vals: any[]): this;
+  between(val1: string | number | Date, val2: string | number | Date): this;
+  norepeats(val1: string | number, val2?: number): this;
+  regexp(val: RegExp): this;
+}
+const props = Object.create(null);
 
 /**
  * 验证类型链
  */
-export class ChainConstructor {
-  $types: (string | [string, any])[] = [];
-  $substruct: (StructArray | StructObject);
-  $handler: [Callback?, Callback?] = [];
-  $customs: [0|1, Method|AsyncMethod, any[]?][] = [];
-  $names: [string?, string[]?] = [];
-  $msgs: TypeMessages;
+class ChainConstructor {
+  __types: (string | [string, any])[] = [];
+  __substruct: (TypeStruct | undefined);
+  __handler: [Callback?, Callback?] = [];
+  __customs: [0|1, Method|AsyncMethod, any[]?][] = [];
+  __names: [string?, string[]?] = [];
+  __msgs: TypeMessages| undefined;
 
   isAsync = false; // 是否为一个异步请求链
-  struct(s: StructArray | StructObject) { // 子链
-    this.$substruct = s;
+  struct(s: TypeStruct) { // 子链
+    this.__substruct = s;
     return this;
   }
   apply(method: Method, ...args: any[]) { // 自定义验证方法
-    if(methods.func(method)) this.$customs.push([0, method, args]);
+    if(methods.func(method)) this.__customs.push([0, method, args]);
     return this;
   }
   async(method: AsyncMethod, ...args: any[]) { // 自定义异步验证方法
-    if(methods.func(method)) this.$customs.push([1, method, args]);
+    if(methods.func(method)) this.__customs.push([1, method, args]);
     this.isAsync = true;
     return this;
   }
   error(f: Callback) { // 验证失败处理
-    if(methods.func(f)) this.$handler[0] = f;
+    if(methods.func(f)) this.__handler[0] = f;
     return this;
   }
   ok(f: Callback) { // 验证成功处理
-    if(methods.func(f)) this.$handler[1] = f;
+    if(methods.func(f)) this.__handler[1] = f;
     return this;
   }
   alias(n: string,...names: string[]) { // 名称
-    const n1 = this.$names[0],
-      n2 = this.$names[1];
+    const n1 = this.__names[0],
+      n2 = this.__names[1];
 
-    if (!n1) this.$names[0] = n;
-    else if (n1 && !n2) this.$names[1] = [n];
-    else if(n1 && n2) this.$names[1].push(n);
+    if (!n1) this.__names[0] = n;
+    else if (n1 && !n2) this.__names[1] = [n];
+    else if(n1 && n2) n2.push(n);
     if (names.length > 0) {
-      if (!n2) this.$names[1]  = names;
-      else this.$names[1]  = n2.concat(names);       
+      if (!n2) this.__names[1]  = names;
+      else this.__names[1]  = n2.concat(names);       
     }
     return this;
   }
   msg(key: string, info: string): this ;
   msg(msgs: TypeMessages): this ;
   msg(key: string|TypeMessages, info?: string): this {
-    if (!this.$msgs)  this.$msgs = {};
-    if(methods.string(key) && info) this.$msgs[key] = info;
-    else if(methods.object(key)) Object.assign(this.$msgs, key);
+    if (!this.__msgs)  this.__msgs = {};
+    if(methods.string(key) && info) this.__msgs[key] = info;
+    else if(methods.object(key)) Object.assign(this.__msgs, key);
     return this;
   }
-  
-}
 
-const props = Object.create(null);
+}
 
 Object.keys(methods).forEach(key  => {
   const rule = (methods as { [k: string]: Method })[key];
@@ -125,14 +204,14 @@ Object.keys(methods).forEach(key  => {
   if (rule.length === 1) {
     props[key] = {
       get() {
-        this.$types.push(key);
+        this.__types.push(key);
         return this;
       },
     };
   } else {
     props[key] = {
       value(...args: any[]) {
-        this.$types.push([key, args]);
+        this.__types.push([key, args]);
         return this;
       },
     };
@@ -140,4 +219,4 @@ Object.keys(methods).forEach(key  => {
 });
 Object.defineProperties(ChainConstructor.prototype, props);
 
-export default (): TypeChain => new ChainConstructor();
+export default ChainConstructor;

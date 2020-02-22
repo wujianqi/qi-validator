@@ -9,12 +9,12 @@
 ![npm type definitions](https://img.shields.io/npm/types/qi-validator)
 ![npm](https://img.shields.io/npm/v/qi-validator)  
 
-本库特色 ：  
+本库特点 ：  
 
-- [x] 集成方法110多项，可覆盖绝大多数数据验证应用场景。  
+- [x] 集成验证方法110多项，可覆盖绝大多数数据验证应用场景。  
 - [x] 链式，简单简洁，可多层级嵌套, 值对象与规则结构的属性一致。  
 - [x] 内置方法已实现string与number类型互转，无需手动转换。  
-- [x] 前后端通用，最低支持ES5，除低版本**异步**需要Promise垫片外无任何依赖库。  
+- [x] 前后端通用，最低支持ES5，使用ES5异步Promise需垫片，无其它依赖库。  
 - [x] 可拆分使用，仅使用单项正则，或仅使用单项验证方法（见模块引用）。  
 
 ------
@@ -57,7 +57,7 @@ methods.password('dd3&G_1a');
 
 ### 属性说明
 
-* .printout  是否输出消息（console.warn），默认否。
+* .printout  是否输出验证失败消息（console.warn），默认否。
 * .string  字符串验证链式对象。
 * .number  数字验证链式对象。
 * .object  对象值类型验证链式对象。
@@ -73,7 +73,7 @@ methods.password('dd3&G_1a');
 > 最少1位以上，可变参数的规则项：minof、maxof、enum、and、an、or 例：v.number.minof(2,19,10,20)  
 > 无参数的规则项，均为直接使用属性方式：例：v.string.english.upper  
 > 链式对象支持所有规则任意搭配，但不建议无意义组合，例：v.string<del>.number</del>  
-> 链式对象仅仅是索引，没有实质验证内容，通过v.validate(...)才会生效  
+> 链式对象仅仅是索引，没有实质验证过程，通过v.validate(...)才会生效  
 
 * .error(handler:function)，绑定未通过验证的回调函数，用法见示例。
 * .ok(handler:function)，绑定已通过验证的回调函数，用法见示例。
@@ -203,7 +203,7 @@ v.any.msg({'integer':'%a数字有误！', 'gt': '比较有误'})
 | boolean ☆           | 是否为布尔 |
 | func ☆              | 是否为函数 |
 | datetype ☆          | 是否为日期类型，字符串判断用下面date规则 |
-| **空白包含验证**  |  | 
+| **包含与必填**  |  | 
 | required             | 必需有值！如果没required，空值可在链对象中直接通过，设值后才会一一判断。| 
 | enum ☆              | 是否为枚举, 枚举项为动态参数enum(1,2,3)，如判断数组可使用in([1,2,3])方式 |
 | in ☆                | 是否为字符、数组元素、对象属性所包含 |

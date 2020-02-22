@@ -4,6 +4,7 @@ import v, { ResultObject } from '../src/validator';
 
 describe('验证链 validator test', function () {
   v.printout = true;
+  
   let data = {
     "name": "张三",
     "age":30,
@@ -36,7 +37,7 @@ describe('验证链 validator test', function () {
   };
 
   let struct = {
-    name: v.string.chinese.alias('姓名').in(['李四','王五']).min(10),
+    name: v.string.required.chinese.alias('姓名').in(['李四','王五']).min(10),
     age: v.number.integer.alias('年龄'),
     address: v.string.address.alias('地址'),
     hobby: [
@@ -58,13 +59,13 @@ describe('验证链 validator test', function () {
     remark: v.string
   };
  
-  //it('测试1', function () {      
-    //assert(!v.validate(data, v.number));
-    //assert(v.validate(data.name, v.string.chinese.in(['张三','李四'])));
-    //assert(v.validate(data.age, v.number.int));
-    //assert(v.validate(data.hobby, v.array.len(3)));
-    //assert(!v.validate('362323197809323113', v.string.idcardvalid));
-  //});
+  it('测试1', function () {      
+    assert(!v.validate(data, v.number));
+    assert(v.validate(data.name, v.string.chinese.in(['张三','李四'])));
+    assert(v.validate(data.age, v.number.integer));
+    assert(v.validate(data.hobby, v.array.len(3)));
+    assert(!v.validate('362323197809323113', v.string.idcard));
+  });
   it('结构化规则对象测试', function () {
     assert(!v.validate(data, struct));
   });

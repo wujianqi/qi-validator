@@ -9,7 +9,9 @@ let commonPlugins = [
   commonjs({
     namedExports: {
       'lib/rules.js': ['norepeat', 'ext'],
-      'es/rules.js': ['norepeat', 'ext']
+      'es/rules.js': ['norepeat', 'ext'],
+      'lib/validator.js': ['Chain'],      
+      'es/validator.js': ['Chain']
     }
   }),
   typescript()

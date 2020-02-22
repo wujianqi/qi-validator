@@ -116,7 +116,6 @@ Object.keys(rules).forEach(key => {
   }
 })
 
-type TypeMethods = typeof methods & { 
-    [k in keyof typeof rules]: (value: string | number) => boolean;    
-}
-export default methods as TypeMethods;
+export default methods as typeof methods & { 
+  [k in keyof typeof rules]: (value: string | number) => boolean;    
+};
