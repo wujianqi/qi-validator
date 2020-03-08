@@ -4,6 +4,7 @@ import v, { ResultObject } from '../src/validator';
 
 describe('验证链 validator test', function () {
   v.printout = true;
+  v.singleMode = true;
   
   let data = {
     "name": "张三",

@@ -14,6 +14,7 @@ declare const _default: {
     readonly boolean: Chain;
     readonly any: Chain;
     printout: boolean;
+    singleMode: boolean;
 } & {
     validate: typeof validate;
     get(obj: TypeValue, path: string | (string | number)[]): any;

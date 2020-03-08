@@ -33,7 +33,8 @@ const validator = {
   get any() {
     return new Chain();
   },
-  printout: false
+  printout: false,
+  singleMode: false
 };
 
 /**
@@ -44,7 +45,7 @@ const validator = {
  */
 function findChain(struct: TypeStruct, path: (string | number)[], cb: Function): void {
   if (Array.isArray(struct) && struct.length > 0) {
-    struct.forEach((t:StructObject|Chain|undefined, i:number) => {
+    struct.forEach((t: StructObject|Chain|undefined, i: number) => {
       const p = path.concat();
 
       p.push(i);
@@ -96,7 +97,7 @@ function findValue(obj: TypeValue, path: (string | number)[]): any {
  */
 function format(info: string, n1?: string, n2?: string[], n3?: string[]): string {
   n1 = n1 || '';
-  let nv = n2 || targetDefault;
+  const nv = n2 || targetDefault;
 
   info = info.replace(/%a/g, n1);
   if (/\%t/.test(info)) info = info.replace(/%t/g, () => {
@@ -149,40 +150,46 @@ function chkchain(value: any, chain: Chain, path?: (string | number)[]):
       errMsgs.push(format(getinfo(m, chain.__msgs), nms[0], nms[1], args)),
     getm = (args?: any[]) => // 取值格式化
       [value].concat(args).map(n => methods.string(n) || methods.number(n) ? String(n): '');
+
+  for (let i = 0, len = chain.__types.length; i < len; i++) {
+    const t = chain.__types[i];
   
-  chain.__types.forEach( t=> {
     if (typeof t === 'string') { // 内置单参数方法验证失败
       if (ms[t](value) === false) {
         errkeys.push(t);
         addm(t, getm());
+        if(validator.singleMode) break;
       } else okeys.push(t);
     }
     else if (Array.isArray(t)) { // 内置多参数方法验证失败
       if(ms[t[0]](value, ...t[1]) === false) {
         errkeys.push(t[0]);
         addm(t[0], getm(t[1]));
+        if(validator.singleMode) break;
       } else okeys.push(t[0]);
     }
-  });
+  }
 
-  chain.__customs.forEach((n, i) => { // 自定义方法验证
+  for (let i = 0, len = chain.__customs.length; i < len; i++) {
+    const n = chain.__customs[i];
     const ars = n[2] || [];
   
     if (n[0] === 0 ) {
       if (n[1](value, ...ars) === false) {
         errkeys.push(i);
         addm(String(i), getm(ars));
+        if(validator.singleMode) break;
       } else okeys.push(i);
     } else if (n[0] === 1 ) { // 链内异步合并
       afncs.push(n[1](value, ...ars) as Promise<boolean>)
       afArgs.push([i,ars]);
     }
-  });
+  }
   
   if(chain.isAsync) {  // 异步方法验证
     return new Promise((resolve, reject) => {
       Promise.all(afncs).then(res => {
-        res.forEach((n, i) => {          
+        res.forEach((n, i) => {
           if(n === false) {
             const j = afArgs[i][0];
 
@@ -205,10 +212,10 @@ function chkchain(value: any, chain: Chain, path?: (string | number)[]):
  */
 function printout(errs: ResultObject) {
   const m = errs,
-      p = m.path ? m.path.join('.') + ': \n': '',
-      nm = m.msgs ? m.msgs.map((n, i) => (m.keys? m.keys[i] :'') + ' \u2717 ' + n) : [];
+    p = m.path ? m.path.join('.') + ': \n': '',
+    nm = m.msgs ? m.msgs.map((n, i) => (m.keys? m.keys[i].toString() :'') + ' \u2717 ' + n) : [];
 
-    console.warn(`\x1B[31m${p}\x1B[36m${nm.join('\n')}`);
+  console.warn(`\x1B[31m${p}\x1B[36m${nm.join('\n')}`);
 }
 
 
@@ -311,7 +318,7 @@ function check(value: any, struct: TypeStruct, parentPath?: (string | number)[])
 }
 function validate(data: string|number|boolean|null|undefined, struct: Chain): boolean | Promise<boolean>;
 function validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
-function validate(data: any, struct: TypeStruct): boolean | Promise<boolean> {
+function validate(data: any, struct: TypeStruct): boolean | Promise<boolean> { 
   return check(data, struct);
 }
 

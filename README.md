@@ -58,6 +58,7 @@ methods.password('dd3&G_1a');
 ### 属性说明
 
 * .printout  是否输出验证失败消息（console.warn），默认否。
+* .singleMode  同步验证只要有1项不通过就输出结果。默认否，即验证所有项后输出结果。
 * .string  字符串验证链式对象。
 * .number  数字验证链式对象。
 * .object  对象值类型验证链式对象。

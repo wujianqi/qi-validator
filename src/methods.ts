@@ -96,7 +96,7 @@ const methods = {
     }
     return realLength <= v2;
   },
-  empty: (arg: any) => !!arg ? 
+  empty: (arg: any) => arg ? 
     (arg.length ? arg.length === 0: (isObject(arg))? Object.keys(arg).length === 0 : false): true,
   regexp: (arg: any, arg2: RegExp): boolean => arg2.test(arg),
   and: <T extends any>(arg1: T, arg2: T, ...args: T[]) => 
