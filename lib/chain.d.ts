@@ -27,6 +27,9 @@ interface ChainConstructor {
     readonly chinese: this;
     readonly upper: this;
     readonly lower: this;
+    readonly hasLetter: this;
+    readonly hasDigit: this;
+    readonly hasSpec: this;
     readonly nospace: this;
     readonly nodbc: this;
     readonly norepeat: this;

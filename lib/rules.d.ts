@@ -7,6 +7,9 @@ declare const _default: {
     chinese: RegExp;
     upper: RegExp;
     lower: RegExp;
+    hasLetter: RegExp;
+    hasDigit: RegExp;
+    hasSpec: RegExp;
     nospace: RegExp;
     nodbc: RegExp;
     norepeat: RegExp;

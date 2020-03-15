@@ -9,7 +9,7 @@
 ![npm type definitions](https://img.shields.io/npm/types/qi-validator)
 ![npm](https://img.shields.io/npm/v/qi-validator)  
 
-本库特点 ：  
+本库特点 ：&nbsp; &nbsp; [在线体验](https://175.io/demo/demo1.html)  
 
 - [x] 集成验证方法110多项，可覆盖绝大多数数据验证应用场景。  
 - [x] 链式，简单简洁，可多层级嵌套, 值对象与规则结构的属性一致。  
@@ -22,7 +22,7 @@
 安装：
 
 ```npm
-npm i qi-validator
+npm install qi-validator
 ```
 
 引用库模块：
@@ -30,12 +30,12 @@ npm i qi-validator
 ```javascript
 
 import v from 'qi-validator';
-// ES5方式 const validator = require('qi-validator');
+// ES5方式 const validator = require('qi-validator').default;
 v.validate("dafb", v.string.len(4).min(3)); // true
 
 // 仅使用正则规则集：
 import rules from 'qi-validator/es/rules'; 
-// ES5方式 const rules = require('qi-validator/lib/rules');
+// ES5方式 const rules = require('qi-validator/lib/rules').default;
 rules.password.test('dd3&G_1a');
 
 // 仅使用方法集（含所有正则规则）：
@@ -99,7 +99,7 @@ v.validate({
   place:[ { shows:11 }, { shows:5 } ]
 }, {
   name: v.string.required.chinese.min(2).alias('姓名'),
-  hobby: [, {c: v.any.required.alias('爱好二') ],
+  hobby: [, {c: v.any.required.alias('爱好二')} ],
   place: v.array.len(2).alias('出演次数').struct([ 
       {shows: v.number.required.integer}
     ])
@@ -222,8 +222,11 @@ v.any.msg({'integer':'%a数字有误！', 'gt': '比较有误'})
 | english              | 纯英文字母 |
 | chinese              | 纯中文 |
 | alphanum             | 字母和数字组合 |
-| upper                | 有大写 |
-| lower                | 有小写 |
+| upper                | 需有大写 |
+| lower                | 需有小写 |
+| hasLetter            | 需有字母 |
+| hasDigit             | 需有数字 |
+| hasSpec              | 需有特殊字符，!@#$%^&*?() |
 | nospace              | 不含有空格 |
 | nospec               | 不含特殊字符 |
 | nodbc                | 不含全角特殊字符 |

@@ -43,6 +43,9 @@ declare const _default: {
     chinese: (value: string | number) => boolean;
     upper: (value: string | number) => boolean;
     lower: (value: string | number) => boolean;
+    hasLetter: (value: string | number) => boolean;
+    hasDigit: (value: string | number) => boolean;
+    hasSpec: (value: string | number) => boolean;
     nospace: (value: string | number) => boolean;
     nodbc: (value: string | number) => boolean;
     norepeat: (value: string | number) => boolean;

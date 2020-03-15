@@ -4,9 +4,7 @@ interface TypeValue {
     [key: string]: any;
     [key: number]: any;
 }
-declare function validate(data: string | number | boolean | null | undefined, struct: Chain): boolean | Promise<boolean>;
-declare function validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
-declare const _default: {
+declare const validator: {
     readonly string: Chain;
     readonly number: Chain;
     readonly object: Chain;
@@ -16,8 +14,10 @@ declare const _default: {
     printout: boolean;
     singleMode: boolean;
 } & {
-    validate: typeof validate;
+    validate(data: string | number | boolean | null | undefined, struct: Chain): boolean | Promise<boolean>;
+    validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
+    validate(data: any, struct: TypeStruct): boolean | Promise<boolean>;
     get(obj: TypeValue, path: string | (string | number)[]): any;
 };
-export default _default;
+export default validator;
 //# sourceMappingURL=validator.d.ts.map

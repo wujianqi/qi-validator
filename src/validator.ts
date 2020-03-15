@@ -14,7 +14,7 @@ interface TypeValue {
   [key: number]: any;
 }
 
-const validator = {  
+const vo = {  
   get string() {
     return new Chain().string;
   },
@@ -55,16 +55,18 @@ function findChain(struct: TypeStruct, path: (string | number)[], cb: Function):
       }
     });
   } else {
-    Object.keys(struct).forEach(key => {
-      const type = (struct as StructObject)[key];
-      const p = path.concat();
+    for (const key in struct) {
+      if (struct.hasOwnProperty(key)) {
+        const type = (struct as StructObject)[key];
+        const p = path.concat();
 
-      p.push(key);
-      if (type instanceof Chain) { cb(p, type); }
-      else if (typeof type === 'object') { 
-        findChain(type as StructObject, p, cb); 
+        p.push(key);
+        if (type instanceof Chain) { cb(p, type); }
+        else if (typeof type === 'object') { 
+          findChain(type as StructObject, p, cb); 
+        }        
       }
-    })
+    }
   }
 }
 
@@ -158,14 +160,14 @@ function chkchain(value: any, chain: Chain, path?: (string | number)[]):
       if (ms[t](value) === false) {
         errkeys.push(t);
         addm(t, getm());
-        if(validator.singleMode) break;
+        if(vo.singleMode) break;
       } else okeys.push(t);
     }
     else if (Array.isArray(t)) { // 内置多参数方法验证失败
       if(ms[t[0]](value, ...t[1]) === false) {
         errkeys.push(t[0]);
         addm(t[0], getm(t[1]));
-        if(validator.singleMode) break;
+        if(vo.singleMode) break;
       } else okeys.push(t[0]);
     }
   }
@@ -178,7 +180,7 @@ function chkchain(value: any, chain: Chain, path?: (string | number)[]):
       if (n[1](value, ...ars) === false) {
         errkeys.push(i);
         addm(String(i), getm(ars));
-        if(validator.singleMode) break;
+        if(vo.singleMode) break;
       } else okeys.push(i);
     } else if (n[0] === 1 ) { // 链内异步合并
       afncs.push(n[1](value, ...ars) as Promise<boolean>)
@@ -243,7 +245,7 @@ function getResult(results: ResultArray): boolean {
     };
 
     if (handlers && handlers[0]) handlers[0](getErrs());
-    if (validator.printout) printout(getErrs());
+    if (vo.printout) printout(getErrs());
     return false;
   } else {
     if (handlers && handlers[1]) { 
@@ -316,15 +318,17 @@ function check(value: any, struct: TypeStruct, parentPath?: (string | number)[])
   
   } else return checked();
 }
-function validate(data: string|number|boolean|null|undefined, struct: Chain): boolean | Promise<boolean>;
-function validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
-function validate(data: any, struct: TypeStruct): boolean | Promise<boolean> { 
-  return check(data, struct);
-}
 
-export default Object.assign(validator, {
-  validate,
-  get(obj: TypeValue, path: string | (string|number) []): any {
-    return findValue(obj, methods.string(path) ? path.split('.'): path);
-  }
-});
+const validator = vo as typeof vo & {
+  validate(data: string|number|boolean|null|undefined, struct: Chain): boolean | Promise<boolean>;
+  validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
+  validate(data: any, struct: TypeStruct): boolean | Promise<boolean>;
+  get(obj: TypeValue, path: string | (string|number) []): any;
+};
+validator.validate = (data: any, struct: TypeStruct): boolean | Promise<boolean> => { 
+  return check(data, struct);
+};
+validator.get = (obj: TypeValue, path: string | (string|number) []): any => {
+  return findValue(obj, methods.string(path) ? path.split('.'): path);
+};
+export default validator;

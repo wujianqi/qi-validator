@@ -109,12 +109,14 @@ const methods = {
   in: inc
 };
 
-Object.keys(rules).forEach(key => {
-  (methods as {[key: string]: (...values: any[]) => boolean })[key] = (value: string | number) => {
-    if (typeof value === 'number') value = String(value);
-    return ((rules as {[key: string]: RegExp})[key]).test(value);
+for (const key in rules) {
+  if (rules.hasOwnProperty(key)) {
+    (methods as {[key: string]: (...values: any[]) => boolean })[key] = (value: string | number) => {
+      if (typeof value === 'number') value = String(value);
+      return ((rules as {[key: string]: RegExp})[key]).test(value);
+    }
   }
-})
+}
 
 export default methods as typeof methods & { 
   [k in keyof typeof rules]: (value: string | number) => boolean;    

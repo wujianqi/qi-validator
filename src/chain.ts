@@ -33,6 +33,9 @@ interface ChainConstructor {
   readonly chinese: this;
   readonly upper: this;
   readonly lower: this;
+  readonly hasLetter: this;
+  readonly hasDigit: this;
+  readonly hasSpec: this;
   readonly nospace: this;
   readonly nodbc: this;
   readonly norepeat: this;
@@ -139,6 +142,7 @@ interface ChainConstructor {
   norepeats(val1: string | number, val2?: number): this;
   regexp(val: RegExp): this;
 }
+
 const props = Object.create(null);
 
 /**
@@ -192,31 +196,41 @@ class ChainConstructor {
   msg(key: string|TypeMessages, info?: string): this {
     if (!this.__msgs)  this.__msgs = {};
     if(methods.string(key) && info) this.__msgs[key] = info;
-    else if(methods.object(key)) Object.assign(this.__msgs, key);
+    else if(methods.object(key)) {
+      if (Object.assign) Object.assign(this.__msgs, key)
+      else {
+        for (const k in key) {
+          if (Object.prototype.hasOwnProperty.call(key, k)) this.__msgs[k] = key[k];
+        }
+      }
+    }
     return this;
   }
 
 }
 
-Object.keys(methods).forEach(key  => {
-  const rule = (methods as { [k: string]: Method })[key];
+for (const key in methods) {
+  if (methods.hasOwnProperty(key)) {
+    const rule = (methods as { [k: string]: Method })[key];
 
-  if (rule.length === 1) {
-    props[key] = {
-      get() {
-        this.__types.push(key);
-        return this;
-      },
-    };
-  } else {
-    props[key] = {
-      value(...args: any[]) {
-        this.__types.push([key, args]);
-        return this;
-      },
-    };
+    if (rule.length === 1) {
+      props[key] = {
+        get() {
+          this.__types.push(key);
+          return this;
+        },
+      };
+    } else {
+      props[key] = {
+        value(...args: any[]) {
+          this.__types.push([key, args]);
+          return this;
+        },
+      };
+    }    
   }
-});
+}
+
 Object.defineProperties(ChainConstructor.prototype, props);
 
 export default ChainConstructor;
