@@ -358,7 +358,7 @@ describe('单项数据方法测试 validator test', function () {
     assert(m.idcard('231085198403033418'));
   });
   it('autocard no passed test', function () {
-    assert(!m.autocard('粤Bi232i'));
+    assert(!m.autocard('粤Bi2O32'));
   });
   it('autocard passed test', function () {
     assert(m.autocard('粤BD00012'));

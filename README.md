@@ -9,7 +9,7 @@
 ![npm type definitions](https://img.shields.io/npm/types/qi-validator)
 ![npm](https://img.shields.io/npm/v/qi-validator)  
 
-本库特点 ：&nbsp; &nbsp; [在线体验](https://175.io/demo/demo1.html)  
+本库特点 ：
 
 - [x] 集成验证方法110多项，可覆盖绝大多数数据验证应用场景。  
 - [x] 链式，简单简洁，可多层级嵌套, 值对象与规则结构的属性一致。  
@@ -19,7 +19,7 @@
 
 ------
 
-安装：
+安装：&nbsp; &nbsp; [在线测试体验](https://175.io/demo/demo1.html)  
 
 ```npm
 npm install qi-validator
