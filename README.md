@@ -17,9 +17,11 @@
 - [x] 前后端通用，最低支持ES5，使用ES5异步Promise需垫片，无其它依赖库。  
 - [x] 可拆分使用，仅使用单项正则，或仅使用单项验证方法（见模块引用）。  
 
+> async-validator（AntD、Element等UI框架集成的）与本库兼容方法处理，[见示例](#async-validtor-兼容处理)
+
 ------
 
-安装：&nbsp; &nbsp; [在线测试体验](https://175.io/demo/demo1.html)  
+安装：&nbsp; &nbsp; [简单验证](https://175.io/demo/demo.html) &nbsp; &nbsp;  [深度验证体验](https://175.io/demo/demo1.html)  
 
 ```npm
 npm install qi-validator
@@ -326,6 +328,55 @@ v.any.msg({'integer':'%a数字有误！', 'gt': '比较有误'})
 
 标识☆号的，为非正则规则。
 
-* Promise垫片库: [es6-promise](https://github.com/stefanpenner/es6-promise) <br>
-
 ------
+
+### async-validtor 兼容处理
+
+> 以VUE ELement UI的表单验证为例，对比：  
+
+```javascript
+// 原校验方式
+rules: {
+  username: [
+    {required: true, message: '用户名不能为空', trigger: 'blur'},
+    {type: 'string', message: '用户名必须为字符串', trigger: 'blur'},
+    {min: 2,  message: '用户名长度必须为大于2', trigger: 'blur'},
+    {pattern: /^[A-Za-z]+[\w\-_]*[A-Za-z0-9]+$/, message: '用户名必需字母或数字组合', trigger: 'blur'},
+  ]
+},
+
+// 使用本库处理
+rules: {
+  username: v.string.required.account.min(2).alias('用户名').rule()        
+}
+
+```
+
+> 兼容处理方式，使用如下扩展即可  
+
+```javascript
+// 放在工具目录，引用即可；本库的异步错误处理与同步相同，无需特别处理  
+import validator, { Chain } from 'qi-validator'
+
+// 简化验证
+Chain.prototype.rule = function(eventName) {
+  validator.singleMode = true;
+  return {
+    type: 'any',
+    required: this.__types.indexOf('required') > -1,
+    trigger: eventName || 'blur',
+    validator: (__rule, __value, __cb) => {
+      const errors = [];
+
+      validator.validate(__value, this.error(m => {
+        errors.push(new Error(m.msgs[0]))    
+      }))
+      __cb(errors);
+      return errors;
+    }
+  }
+}
+
+export default validator
+
+```
