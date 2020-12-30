@@ -1,6 +1,6 @@
 import methods from './methods';
 import messages, { targetDefault } from './messages';
-import Chain, { 
+import Chain, {
   StructObject, TypeStruct, Method, AsyncMethod,
   ResultObject, Callback, TypeMessages
 } from './chain';
@@ -14,28 +14,23 @@ interface TypeValue {
   [key: number]: any;
 }
 
-const vo = {  
-  get string() {
-    return new Chain().string;
-  },
-  get number() {
-    return new Chain().number;
-  },
-  get object() {
-    return new Chain().object;
-  },
-  get array() {
-    return new Chain().array;
-  },
-  get boolean() {
-    return new Chain().boolean;
-  },
-  get any() {
-    return new Chain();
-  },
-  printout: false,
-  singleMode: false
-};
+export interface Validator<T> {
+  readonly string: T;
+  readonly number: T;
+  readonly object: T;
+  readonly array: T;
+  readonly boolean: T;
+  readonly any: T;
+  printout: boolean;
+  singleMode: boolean;
+  validate(data: string|number|boolean|null|undefined, struct: T): boolean | Promise<boolean>;
+  validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
+  validate(data: any, struct: TypeStruct): boolean | Promise<boolean>;
+  get(obj: TypeValue, path: string | (string|number) []): any;
+}
+
+let __printout = false;
+let __singleMode: false;
 
 /**
  * 查找类型链对象集合
@@ -56,7 +51,7 @@ function findChain(struct: TypeStruct, path: (string | number)[], cb: Function):
     });
   } else {
     for (const key in struct) {
-      if (struct.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(struct, key)) {
         const type = (struct as StructObject)[key];
         const p = path.concat();
 
@@ -81,7 +76,8 @@ function findValue(obj: TypeValue, path: (string | number)[]): any {
     const p = path[0];
     const currentPath: string | number = (+p).toString() === p ? +p : p;
   
-    if ((typeof currentPath === 'number' && Array.isArray(obj)) || obj.hasOwnProperty(currentPath)) {
+    if ((typeof currentPath === 'number' && Array.isArray(obj)) || 
+      Object.prototype.hasOwnProperty.call(obj, currentPath)) {
       if (path.length === 1) return obj[currentPath];
     }
     return findValue(obj[currentPath], path.slice(1)); 
@@ -160,14 +156,14 @@ function chkchain(value: any, chain: Chain, path?: (string | number)[]):
       if (ms[t](value) === false) {
         errkeys.push(t);
         addm(t, getm());
-        if(vo.singleMode) break;
+        if(__singleMode) break;
       } else okeys.push(t);
     }
     else if (Array.isArray(t)) { // 内置多参数方法验证失败
       if(ms[t[0]](value, ...t[1]) === false) {
         errkeys.push(t[0]);
         addm(t[0], getm(t[1]));
-        if(vo.singleMode) break;
+        if(__singleMode) break;
       } else okeys.push(t[0]);
     }
   }
@@ -180,7 +176,7 @@ function chkchain(value: any, chain: Chain, path?: (string | number)[]):
       if (n[1](value, ...ars) === false) {
         errkeys.push(i);
         addm(String(i), getm(ars));
-        if(vo.singleMode) break;
+        if(__singleMode) break;
       } else okeys.push(i);
     } else if (n[0] === 1 ) { // 链内异步合并
       afncs.push(n[1](value, ...ars) as Promise<boolean>)
@@ -245,7 +241,7 @@ function getResult(results: ResultArray): boolean {
     };
 
     if (handlers && handlers[0]) handlers[0](getErrs());
-    if (vo.printout) printout(getErrs());
+    if (__printout) printout(getErrs());
     return false;
   } else {
     if (handlers && handlers[1]) { 
@@ -319,16 +315,41 @@ function check(value: any, struct: TypeStruct, parentPath?: (string | number)[])
   } else return checked();
 }
 
-const validator = vo as typeof vo & {
-  validate(data: string|number|boolean|null|undefined, struct: Chain): boolean | Promise<boolean>;
-  validate(data: object, struct: TypeStruct): boolean | Promise<boolean>;
-  validate(data: any, struct: TypeStruct): boolean | Promise<boolean>;
-  get(obj: TypeValue, path: string | (string|number) []): any;
-};
-validator.validate = (data: any, struct: TypeStruct): boolean | Promise<boolean> => { 
-  return check(data, struct);
-};
-validator.get = (obj: TypeValue, path: string | (string|number) []): any => {
-  return findValue(obj, methods.string(path) ? path.split('.'): path);
-};
+const validator: Validator<Chain> = {
+  get string() {
+    return new Chain().string;
+  },
+  get number() {
+    return new Chain().number;
+  },
+  get object() {
+    return new Chain().object;
+  },
+  get array() {
+    return new Chain().array;
+  },
+  get boolean() {
+    return new Chain().boolean;
+  },
+  get any() {
+    return new Chain();
+  },  
+  get printout() {
+    return __printout;
+  },
+  set printout(arr) {
+    __printout = arr;
+  },
+  get singleMode() {
+    return __singleMode;
+  },
+  set singleMode(arr) {
+    __singleMode = arr;
+  },
+  validate: (data: any, struct: TypeStruct): boolean | Promise<boolean> => check(data, struct),
+  get: (obj: TypeValue, path: string | (string|number) []): any => {
+    return findValue(obj, methods.string(path) ? path.split('.'): path);
+  }
+}
+
 export default validator;

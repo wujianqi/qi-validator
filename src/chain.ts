@@ -210,7 +210,7 @@ class ChainConstructor {
 }
 
 for (const key in methods) {
-  if (methods.hasOwnProperty(key)) {
+  if (Object.prototype.hasOwnProperty.call(methods, key)) {
     const rule = (methods as { [k: string]: Method })[key];
 
     if (rule.length === 1) {

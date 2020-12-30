@@ -363,6 +363,9 @@ describe('单项数据方法测试 validator test', function () {
   it('autocard passed test', function () {
     assert(m.autocard('粤BD00012'));
   });
+  it('autocard passed test', function () {
+    assert(m.autocard('粤BA00012'));
+  });
   it('not passed test', function () {
     assert(!m.not(12, '12'));
   });

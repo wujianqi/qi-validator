@@ -1,6 +1,6 @@
 import 'mocha';
 import assert from 'assert';
-import v, { ResultObject } from '../src/validator';
+import v, { Chain, Validator, ResultObject } from '../src/validator';
 
 describe('验证链 validator test', function () {
   v.printout = true;
@@ -109,5 +109,13 @@ describe('验证链 validator test', function () {
     assert(!res);
 
   });
+
+});
+
+describe('扩展', function () {
+  type CP = Chain & {testv: (val:any) => any};
+  (Chain.prototype as CP).testv = function(val: any){
+    console.log(val)
+  }
 
 });

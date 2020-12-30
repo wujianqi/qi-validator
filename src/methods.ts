@@ -110,7 +110,7 @@ const methods = {
 };
 
 for (const key in rules) {
-  if (rules.hasOwnProperty(key)) {
+  if (Object.prototype.hasOwnProperty.call(rules, key)) {
     (methods as {[key: string]: (...values: any[]) => boolean })[key] = (value: string | number) => {
       if (typeof value === 'number') value = String(value);
       return ((rules as {[key: string]: RegExp})[key]).test(value);
